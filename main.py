@@ -6,6 +6,8 @@ import sys
 import binascii
 import socket
 import select
+import onewire
+import ds18x20
 #import threading
 #from threading import Thread
 #import Queue
@@ -41,6 +43,13 @@ mysocket.bind(('', 80))
 mysocket.listen(5)
 mysocket.setblocking(0)
 #mysocket.settimeout(0.5)
+
+#configuration of 1-wire
+dat = machine.Pin(13)
+ds = ds18x20.DS18X20(onewire.OneWire(dat))
+roms = ds.scan()
+print('found devices:', roms)
+time.sleep(5)
 
 #os.system('modprobe w1-gpio')
 #os.system('modprobe w1-therm')
