@@ -26,12 +26,10 @@ station = network.WLAN(network.STA_IF)
 
 station.active(True)
 station.connect(ssid, password)
-
-while station.isconnected() == False:
-  pass
-
-print('Connection successful')
-print(station.ifconfig())
+time.sleep(2)
+if station.isconnected() == True:
+    print('Connection successful')
+    print(station.ifconfig())
 
 blue_led = machine.Pin(2, machine.Pin.OUT)
 blue_led.value(1)
@@ -89,6 +87,7 @@ def web_page():
 
 def time_sync():
     try:
+        print("Syncing time...")
         ntptime.settime()
         print("Time adjusted: %s" %str(time.localtime()))
     except:
@@ -442,7 +441,11 @@ while True:
             blue_led.value(1)            
             time.sleep(0.01)
             blue_led.value(0)
-            time.sleep(0.09)
+            time.sleep(0.08)
+            if station.isconnected() == True:
+                blue_led.value(1)            
+                time.sleep(0.01)
+                blue_led.value(0)
             # replace the condition below for accelerated testing
             # if True:
             if (round(time.time()) - seconds >= 10):
