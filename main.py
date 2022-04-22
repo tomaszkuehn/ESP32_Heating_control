@@ -45,12 +45,18 @@ mysocket.setblocking(0)
 #mysocket.settimeout(0.5)
 
 #configuration of 1-wire
-dat = machine.Pin(13)
+dat = machine.Pin(22)
 ds = ds18x20.DS18X20(onewire.OneWire(dat))
 roms = ds.scan()
 print('found devices:', roms)
+ds.convert_temp()
+"""
+time.sleep(1)
+for rom in roms:
+    tt = ds.read_temp(rom)
+    print(tt)
 time.sleep(5)
-
+"""
 #os.system('modprobe w1-gpio')
 #os.system('modprobe w1-therm')
 
@@ -75,11 +81,6 @@ booster      = 0
 temp_avg = 0        #actual temp
 
 def web_page():
-  if 1 == 1:
-    gpio_state="ON"
-  else:
-    gpio_state="OFF"
-  global heating
   gc.collect()
   memf = gc.mem_free()
   html = """<html><head> <title>ESP Web Server</title> <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -88,8 +89,8 @@ def web_page():
   border-radius: 4px; color: white; padding: 16px 40px; text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}
   .button2{background-color: #4286f4;}</style></head><body> <h1>ESP Web Server</h1>
   <p>TIME/MEM: """+str(round(time.time()))+""" / """ +str(memf)+ """</p>
-  <p>HEATING ON: <strong>HEATING"""+str(heating)+"""</strong></p>
-  <p>ACTUAL TEMPP: <strong>TEMP</strong></p>
+  <p>HEATING ON: <strong>HEATING """+str(heating)+"""</strong></p>
+  <p>ACTUAL TEMP: <strong>TEMP """+str(temp_avg)+"""</strong></p>
   <p><a href="/?led=on"><button class="button">ON</button></a></p>
   <p><a href="/?led=off"><button class="button button2">OFF</button></a></p></body></html>"""
   return html
@@ -128,7 +129,13 @@ def temp_raw():
 """
 
 def read_temp(num, out_queue):
-    out_queue.append(1200)
+    try:
+        for rom in roms:
+            tt = ds.read_temp(rom)
+        ds.convert_temp()
+    except:
+        tt = temp_avg/100.0
+    out_queue.append(tt)
 """
     lines = temp_raw()
     timeout = 0
@@ -270,30 +277,11 @@ while True:
     temp_on  = hour_arr[systime[3]][0] + temp_shift
     temp_off = hour_arr[systime[3]][1] + temp_shift
     print ("Temp range ", temp_on,"-",temp_off)
-    #read 1-wire    
-    """
-        t = Thread(target=read_temp, args=(1, my_queue))
-        t.daemon = True
-        t.start()
-        t.join(2)
-        if t.is_alive():
-            print "Alive..."
-            t1 = Thread(target=read_temp, args=(1, my_queue))
-            t1.daemon = True
-            t1.start()
-            t1.join(2)
-            if t1.is_alive():
-                print "Alive2..."
-                print threading.active_count()
-    #            continue
-    #        continue
-    """
+#read 1-wire    
     read_temp(1, my_queue)
 #read until queue is empty
     tt = my_queue.pop(0)
     while tt:
-        
-
 #current temp in tt
         if (tt < -1000):
             tt = temp_avg_arr[0]
@@ -417,25 +405,28 @@ while True:
                 #data = mysocket.recv(4096)
                 conn, addr = mysocket.accept()
                 print('Got a connection')
-                request = conn.recv(1024)
-                request = str(request)
-                print('Content = %s' % request)
-                """
-                led_on = request.find('/?led=on')
-                led_off = request.find('/?led=off')
-                if led_on == 6:
-                    print('LED ON')
-                    #led.value(1)
-                if led_off == 6:
-                    print('LED OFF')
-                    #led.value(0)
-                """
-                response = web_page()
-                conn.send('HTTP/1.1 200 OK\n')
-                conn.send('Content-Type: text/html\n')
-                conn.send('Connection: close\n\n')
-                conn.sendall(response)
-                conn.close()
+                try:
+                    request = conn.recv(1024)
+                    request = str(request)
+                    print('Content = %s' % request)
+                    """
+                    led_on = request.find('/?led=on')
+                    led_off = request.find('/?led=off')
+                    if led_on == 6:
+                        print('LED ON')
+                        #led.value(1)
+                    if led_off == 6:
+                        print('LED OFF')
+                        #led.value(0)
+                    """
+                    response = web_page()
+                    conn.send('HTTP/1.1 200 OK\n')
+                    conn.send('Content-Type: text/html\n')
+                    conn.send('Connection: close\n\n')
+                    conn.sendall(response)
+                    conn.close()
+                except:                    
+                    conn.close()
             # check command over pipe
             # to send command use: echo "command" > /tmp/heating_pipe
             """
@@ -456,7 +447,7 @@ while True:
                 time.sleep(0.01)
                 blue_led.value(0)
             # replace the condition below for accelerated testing
-            # if True:
+            #if True:
             if (round(time.time()) - seconds >= 10):
                 break
         seconds = round(time.time())
