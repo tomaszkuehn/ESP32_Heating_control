@@ -71,7 +71,7 @@ temp_avg = 0        #actual temp
 
 def http_data():
     data=str(temp_arr[1])
-    for i in range (2, 720):
+    for i in range (360, 720):
         data = data + ',' + str(temp_arr[i])
     return data
 
@@ -155,16 +155,16 @@ a:hover {
 
 const weight = ["""+http_data()+"""];
 
-const labels = [
-  
-];
+const labels = [];
 temp_max = -10000;
 temp_min = 10000;
 
 for(i = 1; i<720; i++) {
     if(weight[i] > temp_max) {temp_max = weight[i];}
-    if(weight[i] < temp_min) {temp_min = weight[i];}
+    if((weight[i] != 0) && (weight[i] < temp_min)) {temp_min = weight[i];}
 }
+temp_max = temp_max + 50
+temp_min = temp_min - 50
 const ctx = document.getElementById("canvas").getContext("2d");
 ctx.canvas.height = 100;
 
@@ -185,8 +185,8 @@ const options = {
         borderColor: colors.purple.default,
         data: weight,
         lineTension: 0.2,
-        borderWidth: 2,
-        pointRadius: 3
+        borderWidth: 1,
+        pointRadius: 0
       }
     ]
   },
@@ -216,8 +216,8 @@ const options = {
       yAxes: [
         {
           scaleLabel: {
-            display: true,
-            labelString: "Weight in KG",
+            display: false,
+            labelString: "",
             padding: 10
           },
           gridLines: {
@@ -354,7 +354,7 @@ for i in range (0,720):
 
 temp_avg_arr = []
 for i in range (0,12):
-    temp_avg_arr.append(-255)
+    temp_avg_arr.append(-10000)
 
 hour_arr = []
 for i in range (0,24):
@@ -418,7 +418,10 @@ while True:
         temp_avg = 0
         for i in range (0, 12):
             temp_avg = temp_avg + temp_avg_arr[i]
-        temp_avg = temp_avg/12
+        if(temp_avg_arr[0] > -10000):
+            temp_avg = temp_avg/12
+        else:
+            temp_avg = temp_avg_arr[11]
         temp_avg = temp_avg*100
         temp_avg = round(temp_avg)
         print("(%d): AVG: %d " % (round(time.time()),temp_avg))
