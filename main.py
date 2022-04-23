@@ -68,6 +68,13 @@ temp_shift = 0
 booster      = 0
 temp_avg = 0        #actual temp
 
+
+def http_data():
+    data=str(temp_arr[1])
+    for i in range (2, 720):
+        data = data + ',' + str(temp_arr[i])
+    return data
+
 def web_page_header():
     header = """<html><head> <title>ESP heating control</title> <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="data:,"> <style>html{font-family: Helvetica; display:inline-block; margin: 0px auto; text-align: center;}
@@ -81,6 +88,161 @@ def main_page():
   memf = gc.mem_free()
   html = web_page_header()
   html = html + """<body> <h1>Heating system</h1>
+  <style>
+  body {
+  font-family: "Fira Sans", sans-serif;
+  font-size: 1rem;
+  background-color: #192027;
+  color: #506678;
+  padding: 15px;
+}
+
+.wrapper {
+  width: 100%;
+  max-width: 1024px;
+  margin: 0 auto;
+}
+
+.canvas {
+  position: relative;
+  width: 100%;
+}
+
+.note {
+  width: 100%;
+  float: left;
+  text-align: center;
+  padding: 15px 0;
+}
+
+a {
+  text-decoration: none;
+  color: #506678;
+  border-bottom: 1px solid rgba(80, 102, 120, 0.25);
+  transition: all 0.35s;
+}
+a:hover {
+  color: #677f93;
+  border-bottom: 1px solid rgba(149, 76, 233, 0.5);
+}
+
+@media (min-width: 960px) {
+  body {
+    padding: 25px;
+  }
+
+  .note {
+    padding: 25px 0;
+  }
+}
+  </style>
+
+  <canvas id="canvas" width="300" height="300"></canvas>
+  <script src='https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js'></script>
+  <script>
+  const colors = {
+  purple: {
+    default: "rgba(149, 76, 233, 1)",
+    half: "rgba(149, 76, 233, 0.5)",
+    quarter: "rgba(149, 76, 233, 0.25)",
+    zero: "rgba(149, 76, 233, 0)"
+  },
+  indigo: {
+    default: "rgba(80, 102, 120, 1)",
+    quarter: "rgba(80, 102, 120, 0.25)"
+  }
+};
+
+const weight = ["""+http_data()+"""];
+
+const labels = [
+  
+];
+temp_max = -10000;
+temp_min = 10000;
+
+for(i = 1; i<720; i++) {
+    if(weight[i] > temp_max) {temp_max = weight[i];}
+    if(weight[i] < temp_min) {temp_min = weight[i];}
+}
+const ctx = document.getElementById("canvas").getContext("2d");
+ctx.canvas.height = 100;
+
+gradient = ctx.createLinearGradient(0, 25, 0, 300);
+gradient.addColorStop(0, colors.purple.half);
+gradient.addColorStop(0.35, colors.purple.quarter);
+gradient.addColorStop(1, colors.purple.zero);
+
+const options = {
+  type: "line",
+  data: {
+    labels: weight,
+    datasets: [
+      {
+        fill: true,
+        backgroundColor: gradient,
+        pointBackgroundColor: colors.purple.default,
+        borderColor: colors.purple.default,
+        data: weight,
+        lineTension: 0.2,
+        borderWidth: 2,
+        pointRadius: 3
+      }
+    ]
+  },
+  options: {
+    layout: {
+      padding: 10
+    },
+    responsive: true,
+    legend: {
+      display: false
+    },
+
+    scales: {
+      xAxes: [
+        {
+          gridLines: {
+            display: true
+          },
+          ticks: {
+            padding: 10,
+            autoSkip: false,
+            maxRotation: 15,
+            minRotation: 15
+          }
+        }
+      ],
+      yAxes: [
+        {
+          scaleLabel: {
+            display: true,
+            labelString: "Weight in KG",
+            padding: 10
+          },
+          gridLines: {
+            display: true,
+            color: colors.indigo.quarter
+          },
+          ticks: {
+            beginAtZero: false,
+            max: temp_max,
+            min: temp_min,
+            padding: 10
+          }
+        }
+      ]
+    }
+  }
+};
+
+window.onload = function () {
+  window.myLine = new Chart(ctx, options);
+  Chart.defaults.global.defaultFontColor = colors.indigo.default;
+  Chart.defaults.global.defaultFontFamily = "Fira Sans";
+};
+  </script>
+  
   <p>TIME/MEM: """+str(round(time.time()))+""" / """ +str(memf)+ """</p>
   <p>HEATING ON: <strong>HEATING """+str(heating)+"""</strong></p>
   <p>ACTUAL TEMP: <strong>TEMP """+str(temp_avg)+"""</strong></p>
@@ -192,7 +354,7 @@ for i in range (0,720):
 
 temp_avg_arr = []
 for i in range (0,12):
-    temp_avg_arr.append(0)
+    temp_avg_arr.append(-255)
 
 hour_arr = []
 for i in range (0,24):
@@ -372,6 +534,7 @@ while True:
                     conn.close()
                 except:                    
                     conn.close()
+                gc.collect()
                         
             blue_led.value(1)            
             time.sleep(0.01)
@@ -382,8 +545,8 @@ while True:
                 time.sleep(0.01)
                 blue_led.value(0)
             # replace the condition below for accelerated testing
-            #if True:
-            if (round(time.time()) - seconds >= 10):
+            if True:
+            #if (round(time.time()) - seconds >= 10):
                 break
         seconds = round(time.time())
         print (seconds)
