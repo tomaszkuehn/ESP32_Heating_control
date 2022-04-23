@@ -2,7 +2,6 @@ import os
 import time
 import ntptime
 import sys
-#import serial
 import binascii
 import socket
 import select
@@ -10,7 +9,6 @@ import onewire
 import ds18x20
 #import threading
 #from threading import Thread
-#import Queue
 
 import machine
 import network
@@ -20,6 +18,8 @@ esp.osdebug(None)
 
 import gc
 gc.collect()
+
+blue_led = machine.Pin(2, machine.Pin.OUT)
 
 ssid = 'NCC'
 password = 'password'
@@ -32,9 +32,7 @@ time.sleep(2)
 if station.isconnected() == True:
     print('Connection successful')
     print(station.ifconfig())
-
-blue_led = machine.Pin(2, machine.Pin.OUT)
-blue_led.value(1)
+    blue_led.value(1)
 
 #opening socket for http
 mysocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -42,7 +40,7 @@ mysocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 mysocket.bind(('', 80))
 mysocket.listen(5)
 mysocket.setblocking(0)
-#mysocket.settimeout(0.5)
+
 
 #configuration of 1-wire
 dat = machine.Pin(22)
@@ -50,19 +48,9 @@ ds = ds18x20.DS18X20(onewire.OneWire(dat))
 roms = ds.scan()
 print('found devices:', roms)
 ds.convert_temp()
-"""
-time.sleep(1)
-for rom in roms:
-    tt = ds.read_temp(rom)
-    print(tt)
-time.sleep(5)
-"""
-#os.system('modprobe w1-gpio')
-#os.system('modprobe w1-therm')
+
 
 #configuration parameters
-temp_sensor1 = 1 #'/sys/bus/w1/devices/28-0000031bd290/w1_slave'
-temp_sensor = 0 #'/sys/bus/w1/devices/28-0000031bc16f/w1_slave'
 periodic_run_interval = 240 # in minutes
 booster_delay = 48 #in ticks, set 0 to disable
 
@@ -121,30 +109,6 @@ def time_sync():
     except:
         print("NTP fail")
         
-"""
-#configure serial port to send messages
-ser = serial.Serial (
-    port='/dev/ttyAMA0',
-    baudrate = 9600,
-    parity=serial.PARITY_EVEN,
-    stopbits = serial.STOPBITS_TWO,
-    bytesize=serial.EIGHTBITS,
-    timeout=1
-)
-"""
-
-"""
-def temp_raw():
-    try:
-        f = open(temp_sensor, 'r')
-    except IOError:
-        time.sleep(0.1)
-        lines = "   :"
-        return lines
-    lines = f.readlines()
-    f.close()
-    return lines
-"""
 
 def read_temp(num, out_queue):
     try:
@@ -154,56 +118,38 @@ def read_temp(num, out_queue):
     except:
         tt = temp_avg/100.0
     out_queue.append(tt)
-"""
-    lines = temp_raw()
-    timeout = 0
-    while ((timeout < 10) and (lines[0].strip()[-3:] != 'YES')):
-        timeout = timeout + 1
-        time.sleep(0.2)
-        lines = temp_raw()
-
-    temp_output = lines[1].find('t=')
-
-    if temp_output != -1:
-        temp_string = lines[1].strip()[temp_output+2:]
-        temp_c = float(temp_string) / 1000.0
-#        temp_f = temp_c * 9.0 / 5.0 + 32.0
-        #return temp_c
-        print "Read temp TC:%f\n" % temp_c
-        out_queue.put(temp_c)
-"""    
+   
 
     
 def heating_switch(heating):
-#now send over serial
-   packet = bytearray()
-   if (heating == 1):
-      packet.append(0x01)
-      packet.append(0x05)
-      packet.append(0x00)
-      packet.append(0x00)
-      packet.append(0xFF)
-      packet.append(0x00)
-      packet.append(0x8C)
-      packet.append(0x3A)
-   if (heating == 0):
-      packet.append(0x01)
-      packet.append(0x05)
-      packet.append(0x00)
-      packet.append(0x01)
-      packet.append(0xFF)
-      packet.append(0x00)
-      packet.append(0xDD)
-      packet.append(0xFA)
+#now control the central heating stove
+    """
+    #control over wireless
+    packet = bytearray()
+    if (heating == 1):
+        packet.append(0x01)
+        packet.append(0x05)
+        packet.append(0x00)
+        packet.append(0x00)
+        packet.append(0xFF)
+        packet.append(0x00)
+        packet.append(0x8C)
+        packet.append(0x3A)
+    if (heating == 0):
+        packet.append(0x01)
+        packet.append(0x05)
+        packet.append(0x00)
+        packet.append(0x01)
+        packet.append(0xFF)
+        packet.append(0x00)
+        packet.append(0xDD)
+        packet.append(0xFA)
 
    print(packet) #binascii.hexlify(packet)
 #comment the line below to avoid any messages sent
 #   ser.write(packet)
+    """
 
-
-#heating_switch(0)
-
-#exit()
 
 def process_msg(msg):
     global manual_run
@@ -256,7 +202,7 @@ def read_hour_arr():
 #    for x in f1:
 #        if x[0] != '#':
     for x in range(0,24):
-        uon,uoff = 1500,1600
+        uon,uoff = 1800,1900
         hour_arr[x]=[int(uon), int(uoff)] 
     
     print(hour_arr[7][0]," ",hour_arr[7][1]+1)
@@ -271,15 +217,6 @@ my_queue = [] #Queue.Queue()
 seconds = round(time.time())
 read_hour = 0
 
-"""
-#define system pipe to receive commands
-pipe_path = "/tmp/heating_pipe"
-if not os.path.exists(pipe_path):
-    os.mkfifo(pipe_path)
-os.chmod(pipe_path, 0o777)    
-pipe_fd = os.open(pipe_path, os.O_RDONLY | os.O_NONBLOCK)
-pipe = os.fdopen(pipe_fd)
-"""
 
 # MAIN LOOP #
 
@@ -367,7 +304,8 @@ while True:
             heating = 1
         if booster == 1:
             heating = 0
-                            
+
+#check conditions to decide switch heating on                                                        
         heating = heating or periodic_run or manual_run
         if(manual_pause or manual_stop):
             heating = 0
@@ -393,29 +331,7 @@ while True:
             if(manual_pause > 0):
                 manual_pause = manual_pause -1               
 
-#create www
-        """
-        ff = open("/var/www/html/temp.json","w+")
-        ff.write("{\n")
-        ff.write("\"TEMP_ARR\":[0")
-        for item in temp_arr:
-            ff.write(",%d" % item)
-        ff.write("],")
-        ff.write("\"HEAT_ARR\":[0")
-        for item in heat_arr:
-            ff.write(",%d" % item)
-        ff.write("],")
-        ff.write("\"LAST_AVG\":%d," % temp_avg)
-        ff.write("\"HEAT_ON\":%d," % temp_on)
-        ff.write("\"HEAT_OFF\":%d," % temp_off)
-        ff.write("\"TEMP_SHIFT\":%d" % temp_shift)
-        ff.write("\n}\n")
-        ff.write
-        ff.close
-    
-        print "\n"
-        sys.stdout.flush()
-        """            
+#create www           
         while True:
             #handle http
             ready = select.select([mysocket], [], [], 1)
@@ -427,16 +343,7 @@ while True:
                     request = conn.recv(1024)
                     request = str(request)
                     print('Content = %s' % request)
-                    """
-                    led_on = request.find('/?led=on')
-                    led_off = request.find('/?led=off')
-                    if led_on == 6:
-                        print('LED ON')
-                        #led.value(1)
-                    if led_off == 6:
-                        print('LED OFF')
-                        #led.value(0)
-                    """
+
                     request = request.split('HTTP')
                     request = request[0]
 
@@ -454,17 +361,7 @@ while True:
                     conn.close()
                 except:                    
                     conn.close()
-            # check command over pipe
-            # to send command use: echo "command" > /tmp/heating_pipe
-            """
-            message = pipe.read()
-            if message:
-                print("Received command(s): '%s'" % message)
-                msgs = message.split('#')
-                for msg in msgs:
-                    if msg:
-                        process_msg(msg)
-            """            
+                        
             blue_led.value(1)            
             time.sleep(0.01)
             blue_led.value(0)
