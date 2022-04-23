@@ -92,7 +92,10 @@ def main_page():
 def control_page():
   html = web_page_header()
   html = html + """<body> <h1>Heating control</h1>
-  <p><a href="/"><button class="button button2">Go to main page</button></a></p></body></html>"""
+  <p>Manual_run: 
+  <a href="/control.html/?manual_run=1"><button class="button button2">Manual run ON</button></a>
+  <strong> Status"""+str(manual_run)+"""</strong></p>
+  <p><a href="/"><button class="button button">Go to main page</button></a></p></body></html>"""
   return html 
 
 def config_page():
@@ -347,6 +350,14 @@ while True:
                     request = request.split('HTTP')
                     request = request[0]
 
+                    #action control
+                    if request.find('/?manual_run') > 0:
+                        request_p = request.split('=')
+                        fchar = request_p[1][0]
+                        if fchar == '1':
+                            manual_run = 1
+                        if fchar == '0':
+                            manual_run = 0
                     response = ""
                     if request.find('config') > 0:
                         response = config_page()
