@@ -80,20 +80,38 @@ temp_shift = 0
 booster      = 0
 temp_avg = 0        #actual temp
 
-def web_page():
-  gc.collect()
-  memf = gc.mem_free()
-  html = """<html><head> <title>ESP Web Server</title> <meta name="viewport" content="width=device-width, initial-scale=1">
+def web_page_header():
+    header = """<html><head> <title>ESP heating control</title> <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="data:,"> <style>html{font-family: Helvetica; display:inline-block; margin: 0px auto; text-align: center;}
   h1{color: #0F3376; padding: 2vh;}p{font-size: 1.5rem;}.button{display: inline-block; background-color: #e7bd3b; border: none; 
   border-radius: 4px; color: white; padding: 16px 40px; text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}
-  .button2{background-color: #4286f4;}</style></head><body> <h1>ESP Web Server</h1>
+  .button2{background-color: #4286f4;}</style></head>"""
+    return header
+
+def main_page():
+  gc.collect()
+  memf = gc.mem_free()
+  html = web_page_header()
+  html = html + """<body> <h1>Heating system</h1>
   <p>TIME/MEM: """+str(round(time.time()))+""" / """ +str(memf)+ """</p>
   <p>HEATING ON: <strong>HEATING """+str(heating)+"""</strong></p>
   <p>ACTUAL TEMP: <strong>TEMP """+str(temp_avg)+"""</strong></p>
-  <p><a href="/?led=on"><button class="button">ON</button></a></p>
-  <p><a href="/?led=off"><button class="button button2">OFF</button></a></p></body></html>"""
+  <p><a href="/control.html"><button class="button">Control page</button></a></p>
+  <p><a href="/config.html"><button class="button button2">Config page</button></a></p>
+  </body></html>"""
   return html
+
+def control_page():
+  html = web_page_header()
+  html = html + """<body> <h1>Heating control</h1>
+  <p><a href="/"><button class="button button2">Go to main page</button></a></p></body></html>"""
+  return html 
+
+def config_page():
+  html = web_page_header()
+  html = html + """<body> <h1>Heating config</h1>
+  <p><a href="/"><button class="button button2">Go to main page</button></a></p></body></html>"""
+  return html 
 
 def time_sync():
     try:
@@ -419,7 +437,16 @@ while True:
                         print('LED OFF')
                         #led.value(0)
                     """
-                    response = web_page()
+                    request = request.split('HTTP')
+                    request = request[0]
+
+                    response = ""
+                    if request.find('config') > 0:
+                        response = config_page()
+                    if request.find('control') > 0:
+                        response = control_page()    
+                    if response == "":
+                        response = main_page()    
                     conn.send('HTTP/1.1 200 OK\n')
                     conn.send('Content-Type: text/html\n')
                     conn.send('Connection: close\n\n')
