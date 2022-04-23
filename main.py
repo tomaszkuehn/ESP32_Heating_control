@@ -504,11 +504,16 @@ while True:
             #handle http
             ready = select.select([mysocket], [], [], 1)
             if ready[0]:
-                #data = mysocket.recv(4096)
                 conn, addr = mysocket.accept()
                 print('Got a connection')
                 try:
-                    request = conn.recv(1024)
+                    conn.settimeout(1)
+                    try:
+                        request=conn.recv(1024).strip()
+                    except socket.error:
+                        conn.send('0,0:ERROR:UNKNOWN-ERROR\r\n')
+                        break
+                    #request = conn.recv(1024)
                     request = str(request)
                     print('Content = %s' % request)
 
