@@ -175,8 +175,10 @@ for(i = 0; i<360; i++) {
 
 document.getElementById("diag").innerHTML = '';
 
-temp_max = temp_max + 50;
-temp_min = temp_min - 50;
+temp_max = Math.round(temp_max/10.0);
+temp_min = Math.round(temp_min/10.0);
+temp_max = 10 * temp_max + 50;
+temp_min = 10 * temp_min - 50;
 heating_bar_range = temp_min + (temp_max - temp_min)/5;
 
 for(i = 0; i<360; i++) {
