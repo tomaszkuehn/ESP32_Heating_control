@@ -69,16 +69,24 @@ booster      = 0
 temp_avg = 0        #actual temp
 
 
-def http_data():
+def http_temp():
     data=str(temp_arr[1])
-    for i in range (360, 720):
+    for i in range (361, 720):
         data = data + ',' + str(temp_arr[i])
     return data
 
+def http_heat():
+    data=str(heat_arr[1])
+    for i in range (361, 720):
+        data = data + ',' + str(heat_arr[i])
+    return data    
+
 def web_page_header():
-    header = """<html><head> <title>ESP heating control</title> <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" href="data:,"> <style>html{font-family: Helvetica; display:inline-block; margin: 0px auto; text-align: center;}
-  h1{color: #0F3376; padding: 2vh;}p{font-size: 1.5rem;}.button{display: inline-block; background-color: #e7bd3b; border: none; 
+    header = """<html><head> <title>ESP heating control</title> 
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,"> 
+  <style>html{font-family: Helvetica; display:inline-block; margin: 0px auto; text-align: center;}
+  h1{color: #8F3376; padding: 2vh;}p{font-size: 1.5rem;}.button{display: inline-block; background-color: #e7bd3b; border: none; 
   border-radius: 4px; color: white; padding: 16px 40px; text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}
   .button2{background-color: #4286f4;}</style></head>"""
     return header
@@ -138,14 +146,15 @@ a:hover {
   </style>
 
   <canvas id="canvas" width="300" height="300"></canvas>
+  <p id="diag"></p>
   <script src='https://cdn.jsdelivr.net/npm/chart.js@2.9.3/dist/Chart.min.js'></script>
   <script>
   const colors = {
   purple: {
-    default: "rgba(149, 76, 233, 1)",
-    half: "rgba(149, 76, 233, 0.5)",
-    quarter: "rgba(149, 76, 233, 0.25)",
-    zero: "rgba(149, 76, 233, 0)"
+    default: "rgba(88, 191, 36, 1)",
+    half: "rgba(88, 191, 36, 0.5)",
+    quarter: "rgba(88, 191, 36, 0.25)",
+    zero: "rgba(88, 191, 36, 0)"
   },
   indigo: {
     default: "rgba(80, 102, 120, 1)",
@@ -153,18 +162,29 @@ a:hover {
   }
 };
 
-const weight = ["""+http_data()+"""];
-
+weight = ["""+http_temp()+"""];
+heating = ["""+http_heat()+"""]
 const labels = [];
 temp_max = -10000;
 temp_min = 10000;
 
-for(i = 1; i<720; i++) {
+for(i = 0; i<360; i++) {
     if(weight[i] > temp_max) {temp_max = weight[i];}
     if((weight[i] != 0) && (weight[i] < temp_min)) {temp_min = weight[i];}
 }
-temp_max = temp_max + 50
-temp_min = temp_min - 50
+
+document.getElementById("diag").innerHTML = '';
+
+temp_max = temp_max + 50;
+temp_min = temp_min - 50;
+heating_bar_range = temp_min + (temp_max - temp_min)/5;
+
+for(i = 0; i<360; i++) {
+    if(heating[i] > 0) {
+        heating[i] = heating_bar_range;
+    }
+}
+
 const ctx = document.getElementById("canvas").getContext("2d");
 ctx.canvas.height = 100;
 
@@ -174,11 +194,11 @@ gradient.addColorStop(0.35, colors.purple.quarter);
 gradient.addColorStop(1, colors.purple.zero);
 
 const options = {
-  type: "line",
   data: {
     labels: weight,
     datasets: [
       {
+        type: "line",
         fill: true,
         backgroundColor: gradient,
         pointBackgroundColor: colors.purple.default,
@@ -186,7 +206,13 @@ const options = {
         data: weight,
         lineTension: 0.2,
         borderWidth: 1,
-        pointRadius: 0
+        pointRadius: 0,
+        order: 2
+      }, {
+        type: "bar",
+        data: heating,
+        backgroundColor: 'rgba(235, 124, 33, 0.8)',
+        order: 1
       }
     ]
   },
@@ -418,7 +444,7 @@ while True:
         temp_avg = 0
         for i in range (0, 12):
             temp_avg = temp_avg + temp_avg_arr[i]
-        if(temp_avg_arr[0] > -10000):
+        if (temp_avg_arr[0] > -10000):
             temp_avg = temp_avg/12
         else:
             temp_avg = temp_avg_arr[11]
