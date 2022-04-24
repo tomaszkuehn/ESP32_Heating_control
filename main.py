@@ -224,6 +224,7 @@ const options = {
             display: true
           },
           ticks: {
+            display: false,
             padding: 10,
             autoSkip: false,
             maxRotation: 15,
