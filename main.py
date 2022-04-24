@@ -66,6 +66,7 @@ manual_pause = 0
 manual_stop  = 0 
 temp_shift = 0
 booster      = 0
+speed_run    = 0
 temp_avg = 0        #actual temp
 
 
@@ -86,8 +87,8 @@ def web_page_header():
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="data:,"> 
   <style>html{font-family: Helvetica; display:inline-block; margin: 0px auto; text-align: center;}
-  h1{color: #8F3376; padding: 2vh;}p{font-size: 1.5rem;}.button{display: inline-block; background-color: #e7bd3b; border: none; 
-  border-radius: 4px; color: white; padding: 16px 40px; text-decoration: none; font-size: 30px; margin: 2px; cursor: pointer;}
+  h1{color: #8F3376; padding: 2vh;}p{font-size: 1.0rem;}.button{display: inline-block; background-color: #e7bd3b; border: none; 
+  border-radius: 4px; color: white; padding: 16px 40px; text-decoration: none; font-size: 20px; margin: 2px; cursor: pointer;}
   .button2{background-color: #4286f4;}</style></head>"""
     return header
 
@@ -291,6 +292,10 @@ def control_page():
 def config_page():
   html = web_page_header()
   html = html + """<body> <h1>Heating config</h1>
+  <p>Speed run:<br>
+  <a href="/config.html/?speed_run=1"><button class="button button2">Speed run ON</button></a><br>
+  <a href="/config.html/?speed_run=0"><button class="button button2">Speed run OFF</button></a><br>
+  <strong> Status"""+str(speed_run)+"""</strong></p>
   <p><a href="/"><button class="button button2">Go to main page</button></a></p></body></html>"""
   return html 
 
@@ -556,6 +561,13 @@ while True:
                             manual_run = 1
                         if fchar == '0':
                             manual_run = 0
+                    if request.find('/?speed_run') > 0:
+                        request_p = request.split('=')
+                        fchar = request_p[1][0]
+                        if fchar == '1':
+                            speed_run = 1
+                        if fchar == '0':
+                            speed_run = 0
                     response = ""
                     if request.find('config') > 0:
                         response = config_page()
@@ -581,8 +593,10 @@ while True:
                 time.sleep(0.01)
                 blue_led.value(0)
             # replace the condition below for accelerated testing
-            if True:
-            #if (round(time.time()) - seconds >= 10):
+            if speed_run == 0:
+                if (round(time.time()) - seconds >= 10):
+                    break
+            else:
                 break
         seconds = round(time.time())
         print (seconds)
