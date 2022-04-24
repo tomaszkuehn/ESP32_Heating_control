@@ -69,18 +69,7 @@ booster      = 0
 speed_run    = 0
 temp_avg = 0        #actual temp
 
-
-def http_temp():
-    data=str(temp_arr[1])
-    for i in range (361, 720):
-        data = data + ',' + str(temp_arr[i])
-    return data
-
-def http_heat():
-    data=str(heat_arr[1])
-    for i in range (361, 720):
-        data = data + ',' + str(heat_arr[i])
-    return data    
+   
 
 def web_page_header():
     header = """<html><head> <title>ESP heating control</title> 
@@ -163,8 +152,8 @@ a:hover {
   }
 };
 
-weight = ["""+http_temp()+"""];
-heating = ["""+http_heat()+"""]
+weight = """+str(temp_arr)+""";
+heating = """+str(heat_arr)+"""
 const labels = [];
 temp_max = -10000;
 temp_min = 10000;
@@ -379,10 +368,10 @@ def process_msg(msg):
 
 
 temp_arr     = []
-for i in range (0,720):
+for i in range (0,360):
     temp_arr.append(0)
 heat_arr     = []
-for i in range (0,720):
+for i in range (0,360):
     heat_arr.append(0)
 
 temp_avg_arr = []
@@ -470,14 +459,14 @@ while True:
 
 #check heating rule to avoid continuous usage
         hh = 0
-        if(heating - heat_arr[719] == 1): #heating switched on
-            for i in range (705,720):
+        if(heating - heat_arr[359] == 1): #heating switched on
+            for i in range (345,360):
                 hh = hh + heat_arr[i]
                 if ( hh > 0 ):
                     heating = 0
                     print("HH:%d Heating postponed - over usage\n" % hh)
-        if( heat_arr[719] == 1):	#heating was on
-            for i in range (698,720):
+        if( heat_arr[359] == 1):	#heating was on
+            for i in range (338,360):
                 hh = hh + heat_arr[i]
                 if ( hh > 19 ):
                     heating = 0
@@ -486,14 +475,14 @@ while True:
 #run heating periodically
         hh = 0
         if(heating == 0):
-            ppi = round(720 - periodic_run_interval / 2)
-            for i in range (ppi,720):
+            ppi = round(360 - periodic_run_interval / 2)
+            for i in range (ppi,360):
                 hh = hh + heat_arr[i]
             if ( hh == 0 ):
                 periodic_run = 1
         hh = 0
         if ( periodic_run == 1 ):
-            for i in range (714,720):
+            for i in range (354,360):
                 hh = hh + heat_arr[i]
             if ( hh >= 4 ):
                 periodic_run = 0
