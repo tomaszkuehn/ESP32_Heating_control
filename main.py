@@ -17,7 +17,6 @@ import esp
 esp.osdebug(None)
 
 import gc
-gc.collect()
 
 blue_led = machine.Pin(2, machine.Pin.OUT)
 
@@ -25,10 +24,11 @@ ssid = 'NCC'
 password = 'password'
 
 station = network.WLAN(network.STA_IF)
-
+station.active(False)
+time.sleep(1)
 station.active(True)
 station.connect(ssid, password)
-time.sleep(2)
+time.sleep(3)
 if station.isconnected() == True:
     print('Connection successful')
     print(station.ifconfig())
