@@ -262,7 +262,7 @@ window.onload = function () {
 };
   </script>
   
-  <p>TIME/MEM: """+str(round(time.time()))+""" / """ +str(memf)+ """</p>
+  <p>TIME/MEM: """+str(time.localtime(time.time()))+""" / """ +str(memf)+ """</p>
   <p>HEATING ON: <strong>HEATING """+str(heating)+"""</strong></p>
   <p>ACTUAL TEMP: <strong>TEMP """+str(temp_avg)+"""</strong></p>
   <p><a href="/control.html"><button class="button">Control page</button></a></p>
@@ -410,6 +410,7 @@ read_hour = 0
 
 while True:
     systime = time.localtime(time.time())
+    print(systime)
     #print (systime.tm_hour,':',systime.tm_min, " ", tick, " While loop...")
     print ("Manual RUN:", manual_run, " Manual STOP:", manual_stop, " Periodic RUN:", periodic_run, " PAUSE:", manual_pause, " Booster:", booster)
     if ((systime[4]%5 == 0) and (read_hour == 0)):
