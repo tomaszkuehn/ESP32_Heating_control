@@ -24,10 +24,9 @@ ssid = 'NCC'
 password = 'password'
 
 station = network.WLAN(network.STA_IF)
-station.active(False)
-time.sleep(1)
 station.active(True)
 station.connect(ssid, password)
+print("Network 3s delay...")
 time.sleep(3)
 if station.isconnected() == True:
     print('Connection successful')
@@ -35,12 +34,14 @@ if station.isconnected() == True:
     blue_led.value(1)
 
 #opening socket for http
-mysocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-mysocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-mysocket.bind(('', 80))
-mysocket.listen(5)
-mysocket.setblocking(0)
-
+try:
+    mysocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    mysocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    mysocket.bind(('', 80))
+    mysocket.listen(5)
+    mysocket.setblocking(0)
+except:
+    machine.reset()
 
 #configuration of 1-wire
 dat = machine.Pin(22)
@@ -290,12 +291,15 @@ def config_page():
   return html 
 
 def time_sync():
-    try:
-        print("Syncing time...")
-        ntptime.settime()
-        print("Time adjusted: %s" %str(time.localtime()))
-    except:
-        print("NTP fail")
+    if station.isconnected() == True:
+        try:
+            print("Syncing time...")
+            ntptime.settime()
+            print("Time adjusted: %s" %str(time.localtime()))
+        except:
+            print("NTP fail")
+    else:
+        print("No network connection")            
         
 
 def read_temp(num, out_queue):
@@ -521,7 +525,11 @@ while True:
             if(manual_run > 0):
                 manual_run = manual_run - 1 
             if(manual_pause > 0):
-                manual_pause = manual_pause -1               
+                manual_pause = manual_pause -1     
+
+#every ten minutes (like keepalive)                          
+        if tick%60 == 0:
+            time_sync()
 
 #create www           
         while True:
