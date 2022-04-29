@@ -275,7 +275,7 @@ def control_page():
   html = web_page_header()
   html = html + """<body> <h1>Heating control</h1>
   <p>Manual_run: 
-  <a href="/control.html/?comm=1&action=manual_run&value=1"><button class="button button2">Manual run ON</button></a>
+  <a href="/control.html?comm=1&action=manual_run&value=1"><button class="button button2">Manual run ON</button></a>
   <strong> Status"""+str(manual_run)+"""</strong></p>
   <p><a href="/"><button class="button button">Go to main page</button></a></p></body></html>"""
   return html 
@@ -284,8 +284,8 @@ def config_page():
   html = web_page_header()
   html = html + """<body> <h1>Heating config</h1>
   <p>Speed run:<br>
-  <a href="/config.html/?comm=1&action=speed_run&value=1"><button class="button button2">Speed run ON</button></a><br>
-  <a href="/config.html/?comm=1&action=speed_run&value=0"><button class="button button2">Speed run OFF</button></a><br>
+  <a href="/config.html?comm=1&action=speed_run&value=1"><button class="button button2">Speed run ON</button></a><br>
+  <a href="/config.html?comm=1&action=speed_run&value=0"><button class="button button2">Speed run OFF</button></a><br>
   <strong> Status"""+str(speed_run)+"""</strong></p>
   <p><a href="/"><button class="button button2">Go to main page</button></a></p></body></html>"""
   return html 
@@ -537,22 +537,16 @@ while True:
 
                     request = request.split('HTTP')
                     request = request[0]
-                    response = main_page()
+                    html = ""
                     try:
                         req = request.split(' ')
                         req = req[1].split('?')
+                        html = req[0][1:]
                         print(req[1])
                         parse_arr = http_parse(req[1])
                         print(parse_arr['comm'])
 
                         try:
-                            #page control
-                            if parse_arr['comm'] == '0':
-                                if parse_arr['page'] == 'config':
-                                    response = config_page()
-                                if parse_arr['page'] == 'control':
-                                    response = control_page()    
-
                             #action control
                             if parse_arr['comm'] == '1':
                                 if parse_arr['action'] == 'manual_run':
@@ -573,6 +567,15 @@ while True:
                     except:
                         print("No command")
 
+                    #find which page to show
+                    html = req[0][1:]
+                    if html == "control.html":
+                        response = control_page() 
+                    if html == "config.html":
+                        response = config_page()
+                    if html == "":
+                        response = main_page()
+                            
                     conn.send('HTTP/1.1 200 OK\n')
                     conn.send('Content-Type: text/html\n')
                     conn.send('Connection: close\n\n')
