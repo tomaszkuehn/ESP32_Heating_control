@@ -343,6 +343,16 @@ def heating_switch(heating):
     """
 
 
+def http_parse(query):
+ 
+  params = {}
+  aSplit = query.split('&')
+ 
+  for arg in aSplit:
+    ars = arg.split('=')
+    params[ars[0]] = ars[1]
+  return params
+
 def process_msg(msg):
     global manual_run
     global manual_stop
@@ -551,6 +561,7 @@ while True:
 
                     request = request.split('HTTP')
                     request = request[0]
+                    args = http_parse(request)
 
                     #action control
                     if request.find('/?manual_run') > 0:
