@@ -353,34 +353,6 @@ def http_parse(query):
     params[ars[0]] = ars[1]
   return params
 
-def process_msg(msg):
-    global manual_run
-    global manual_stop
-    global manual_pause
-    global temp_shift
-    m = msg.split()
-    if (m[0] == '2'):
-        if (m[1] == '1'):
-            manual_run = 10
-        if (m[1] == '0'):
-            manual_pause = 10
-    if (m[0] == '1'):
-        if (m[1] == '1'):
-            manual_stop = 0
-        if (m[1] == '0'):
-            manual_stop = 1
-    if (m[0] == '3'):
-        if (m[1] == '1'):
-            temp_shift = temp_shift + 50
-        if (m[1] == '0'):
-            temp_shift = temp_shift - 50
-        if (m[1] == '2'):
-            temp_shift = 0
-    if (temp_shift > 200):
-        temp_shift = 200
-    if (temp_shift < -200):
-        temp_shift = -200
-
 
 temp_arr     = []
 for i in range (0,360):
