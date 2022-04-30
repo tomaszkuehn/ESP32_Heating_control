@@ -530,10 +530,9 @@ while True:
                     #request = conn.recv(1024)
                     request = str(request)
                     print('Content = %s' % request)
-# IP/?comm=X&param1=Y&...
-# comm = 0: switch page - /?comm=0&page=config
+# IP/page.html?comm=X&param1=Y&... page.html may be empty to recall main page
 # comm = 1: command (ex. switch on) - /?comm=1&action=manual_run&value=1
-#
+# 
 
                     request = request.split('HTTP')
                     request = request[0]
