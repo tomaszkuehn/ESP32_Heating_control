@@ -42,14 +42,14 @@ try:
     mysocket.setblocking(0)
 except:
     machine.reset()
-
+"""
 #configuration of 1-wire
 dat = machine.Pin(22)
 ds = ds18x20.DS18X20(onewire.OneWire(dat))
 roms = ds.scan()
 print('found devices:', roms)
 ds.convert_temp()
-
+"""
 
 #configuration parameters
 periodic_run_interval = 240 # in minutes
@@ -353,6 +353,12 @@ def http_parse(query):
     params[ars[0]] = ars[1]
   return params
 
+temp_sources  = [1234]
+
+sensor_array = {}
+#here we define which sensor id's we accept
+for sensor in temp_sources:
+    sensor_array[sensor] = float(-10000)
 
 temp_arr     = []
 for i in range (0,360):
@@ -408,9 +414,14 @@ while True:
     temp_off = hour_arr[systime[3]][1] + temp_shift
     print ("Temp range ", temp_on,"-",temp_off)
 #read 1-wire    
-    read_temp(1, my_queue)
+#    read_temp(1, my_queue)
 #read until queue is empty
-    tt = my_queue.pop(0)
+#    tt = my_queue.pop(0)
+
+    #read temp from the sensor list
+    #for now only the first sensor
+    tt = sensor_array[temp_sources[0]]
+    print("rcv temp: " + str(tt))
     while tt:
 #current temp in tt
         if (tt < -1000):
@@ -494,8 +505,9 @@ while True:
 
 #every two minutes    
         if tick%12 == 0: #shift data in array
-            temp_arr.pop(0)
-            temp_arr.append(temp_avg)
+            if temp_avg > -10000:
+                temp_arr.pop(0)
+                temp_arr.append(temp_avg)
             heat_arr.pop(0)
             if((heating!=0) and (heating!=1)):
                 heating = 0
@@ -559,7 +571,16 @@ while True:
                                         speed_run = 1
                                     else:
                                         speed_run = 0
-                                
+
+                            #remote sensors
+                            if parse_arr['comm'] == '2':    
+                                remote_temp = float(parse_arr['temp'])
+                                remote_id   = int(parse_arr['id'])
+                                print("Received remote " + str(remote_id) + " = " + str(remote_temp))
+                                if remote_id in sensor_array:
+                                    sensor_array[remote_id] = remote_temp
+                                    print("Remote temp accepted")
+
                         except:
                             print("Err processing http request")
 
@@ -572,6 +593,8 @@ while True:
                         response = control_page() 
                     if html == "config.html":
                         response = config_page()
+                    if html == "data.html":
+                        response = "[]"
                     if html == "":
                         response = main_page()
                             
