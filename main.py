@@ -530,7 +530,7 @@ while True:
             time_sync()
 
 #create www           
-        while True
+        while True:
             #handle http
             ready = select.select([mysocket], [], [], 1)
             if ready[0]:
