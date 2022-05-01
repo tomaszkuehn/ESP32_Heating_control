@@ -179,7 +179,7 @@ for(i = 0; i<360; i++) {
 }
 
 const ctx = document.getElementById("canvas").getContext("2d");
-ctx.canvas.height = 100;
+ctx.canvas.height = 80;
 
 gradient = ctx.createLinearGradient(0, 25, 0, 300);
 gradient.addColorStop(0, colors.purple.half);
@@ -263,9 +263,9 @@ window.onload = function () {
 };
   </script>
   
-  <p>TIME/MEM: """+str(time.localtime(time.time()))+""" / """ +str(memf)+ """</p>
-  <p>HEATING ON: <strong>HEATING """+str(heating)+"""</strong></p>
+  <p>TIME: """+str(time.localtime(time.time()))+""" / MEM: """ +str(memf)+ """ / <strong>HEATING """+str(heating)+"""</strong></p>
   <p>ACTUAL TEMP: <strong>TEMP """+str(temp_avg)+"""</strong></p>
+  <p>WAITING TIME: <strong>NOW/MAX """+str(waiting_time)+"/"+str(sensors[0]['interval'])+"""</strong></p>
   <p><a href="/control.html"><button class="button">Control page</button></a></p>
   <p><a href="/config.html"><button class="button button2">Config page</button></a></p>
   </body></html>"""
