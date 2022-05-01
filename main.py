@@ -353,12 +353,16 @@ def http_parse(query):
     params[ars[0]] = ars[1]
   return params
 
-temp_sources  = [1234]
 
-sensor_array = {}
-#here we define which sensor id's we accept
-for sensor in temp_sources:
-    sensor_array[sensor] = float(-10000)
+# sensors definitions: 
+# id: id
+# type: 0=disabled, 1=1-wire, 2=remote
+# temp: last received temp
+# timestamp: last received temp timestamp
+sensors = {0:{'id':1234, 'type':2, 'temp':-10000, 'timestamp':0},
+           1:{'id':0, 'type':0, 'temp':-10000, 'timestamp':0}
+          }
+
 
 temp_arr     = []
 for i in range (0,360):
@@ -403,6 +407,7 @@ read_hour = 0
 while True:
     systime = time.localtime(time.time())
     print(systime)
+    print(sensors[0])
     #print (systime.tm_hour,':',systime.tm_min, " ", tick, " While loop...")
     print ("Manual RUN:", manual_run, " Manual STOP:", manual_stop, " Periodic RUN:", periodic_run, " PAUSE:", manual_pause, " Booster:", booster)
     if ((systime[4]%5 == 0) and (read_hour == 0)):
@@ -420,15 +425,14 @@ while True:
 
     #read temp from the sensor list
     #for now only the first sensor
-    tt = sensor_array[temp_sources[0]]
-    print("rcv temp: " + str(tt))
+    tt = sensors[0]['temp']
     while tt:
 #current temp in tt
         if (tt < -1000):
             tt = temp_avg_arr[0]
         if (tt > 4000):
             tt = temp_avg_arr[0]
-        print(tt)
+        print("Actual used temp: " + str(tt))
 #update avg temp array
         temp_avg_arr.pop(0)
         temp_avg_arr.append(tt)
@@ -577,8 +581,9 @@ while True:
                                 remote_temp = float(parse_arr['temp'])
                                 remote_id   = int(parse_arr['id'])
                                 print("Received remote " + str(remote_id) + " = " + str(remote_temp))
-                                if remote_id in sensor_array:
-                                    sensor_array[remote_id] = remote_temp
+                                if remote_id == sensors[0]['id']:
+                                    sensors[0]['temp'] = remote_temp
+                                    sensors[0]['timestamp'] = time.time()
                                     print("Remote temp accepted")
 
                         except:
