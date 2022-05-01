@@ -359,8 +359,8 @@ def http_parse(query):
 # type: 0=disabled, 1=1-wire, 2=remote
 # temp: last received temp
 # timestamp: last received temp timestamp
-sensors = {0:{'id':1234, 'type':2, 'temp':-10000, 'timestamp':0},
-           1:{'id':0, 'type':0, 'temp':-10000, 'timestamp':0}
+sensors = {0:{'id':1234, 'type':2, 'temp':-10000, 'timestamp':0, 'interval':0},
+           1:{'id':0, 'type':0, 'temp':-10000, 'timestamp':0, 'interval':0}
           }
 
 
@@ -530,7 +530,7 @@ while True:
             time_sync()
 
 #create www           
-        while True:
+        while True
             #handle http
             ready = select.select([mysocket], [], [], 1)
             if ready[0]:
@@ -583,7 +583,11 @@ while True:
                                 print("Received remote " + str(remote_id) + " = " + str(remote_temp))
                                 if remote_id == sensors[0]['id']:
                                     sensors[0]['temp'] = remote_temp
-                                    sensors[0]['timestamp'] = time.time()
+                                    timestamp = time.time()
+                                    interval = timestamp - sensors[0]['timestamp']
+                                    if sensors[0]['timestamp']>0 & (interval > sensors[0]['interval']):
+                                        sensors[0]['interval'] = interval
+                                    sensors[0]['timestamp'] = timestamp
                                     print("Remote temp accepted")
 
                         except:
