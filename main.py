@@ -408,6 +408,8 @@ while True:
     systime = time.localtime(time.time())
     print(systime)
     print(sensors[0])
+    waiting_time = time.time() - sensors[0]['timestamp']
+    print("Waiting for next temp: " + str(waiting_time))
     #print (systime.tm_hour,':',systime.tm_min, " ", tick, " While loop...")
     print ("Manual RUN:", manual_run, " Manual STOP:", manual_stop, " Periodic RUN:", periodic_run, " PAUSE:", manual_pause, " Booster:", booster)
     if ((systime[4]%5 == 0) and (read_hour == 0)):
@@ -585,7 +587,7 @@ while True:
                                     sensors[0]['temp'] = remote_temp
                                     timestamp = time.time()
                                     interval = timestamp - sensors[0]['timestamp']
-                                    if sensors[0]['timestamp']>0 & (interval > sensors[0]['interval']):
+                                    if sensors[0]['timestamp'] > 0 and (interval > sensors[0]['interval']):
                                         sensors[0]['interval'] = interval
                                     sensors[0]['timestamp'] = timestamp
                                     print("Remote temp accepted")
